@@ -1,0 +1,316 @@
+---
+title: "ukb_data_p"
+author: "D Aguilar"
+date: "2024-01-04"
+output: html_document
+---
+```{r}
+
+library(tidyverse)
+library(janitor)
+library(broom)
+library(gtsummary)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(gt)
+library(gtsummary)
+library(car)
+library(finalfit)
+
+```
+
+
+
+```{r }
+
+ukb_data_p <- read.csv("../data/ukb_data_p.csv")
+
+rm(list = ls())
+
+```
+
+
+
+```{r rnfl_r}
+
+# for reproducibility
+set.seed(123) 
+
+# number of observations
+n <- 13732  
+
+# Generate individual observations
+rnfl_r_simulated <- rnorm(n, mean = 29.5862, sd = 8.82752)
+
+# Ensure values are within the specified range
+rnfl_r_simulated <- pmax(pmin(rnfl_r_simulated, 407.38), 0.01)  
+
+# Assign the simulated values to the column in the data frame
+ukb_data_p$rnfl_r <- rnfl_r_simulated
+
+# Check the summary statistics of the generated values
+summary(ukb_data_p$rnfl_r)
+sd(ukb_data_p$rnfl_r)
+
+```
+
+```{r rnfl_r_y}
+
+# Set the proportions
+proportions <- c(10643, 10643)
+years <- c(2006, 2014)
+
+# Simulate the values
+rnfl_r_y_simulated <- sample(years, size = 13732, replace = TRUE, prob = proportions/sum(proportions))
+
+# Assign the simulated values to the data frame
+ukb_data_p$rnfl_r_y <- rnfl_r_y_simulated
+
+```
+
+```{r sex}
+
+# Set the proportions
+proportions <- c(7140, 6592)
+sex <- c("male", "female")
+
+# Simulate the values
+sex_simulated <- sample(sex, size = 13732, replace = TRUE, prob = proportions/sum(proportions))
+
+# Assign the simulated values to the data frame
+ukb_data_p$sex <- sex_simulated
+
+```
+```{r age}
+
+# for reproducibility
+set.seed(123) 
+
+# number of observations
+n <- 13732  
+
+# Generate individual observations
+age_simulated <- rnorm(n, mean = 55.2, sd = 7.6)
+
+
+# Assign the simulated values to the column in the data frame
+ukb_data_p$age <- age_simulated
+
+# Check the summary statistics of the generated values
+summary(ukb_data_p$age)
+sd(ukb_data_p$age)
+
+```
+```{r HT}
+
+# Set the proportions
+proportions <- c(3845, 9887)
+HT <- c("with hypertension", "without hypertension")
+
+# Simulate the values
+HT_simulated <- sample(HT, size = 13732, replace = TRUE, prob = proportions/sum(proportions))
+
+# Assign the simulated values to the data frame
+ukb_data_p$HT <- HT_simulated
+
+```
+
+```{r mdrc}
+
+# for reproducibility
+set.seed(123) 
+
+# number of observations
+n <- 13732  
+
+# Generate individual observations
+mdrc_simulated <- rnorm(n, mean = 6.68569, sd = 1.34499)
+
+# Ensure values are within the specified range
+mdrc_simulated <- pmax(pmin(rnfl_r_simulated, 12), 2) 
+
+# Assign the simulated values to the column in the data frame
+ukb_data_p$mdrc <- mdrc_simulated
+
+# Check the summary statistics of the generated values
+summary(ukb_data_p$mdrc)
+sd(ukb_data_p$mdrc)
+
+```
+```{r mdrc_y}
+
+# Set the proportions
+proportions <- c(7621, 6111)
+years <- c(2006, 2014)
+
+# Simulate the values
+mdrc_y_simulated <- sample(years, size = 13732, replace = TRUE, prob = proportions/sum(proportions))
+
+# Assign the simulated values to the data frame
+ukb_data_p$mdrc_y <- mdrc_y_simulated
+
+```
+
+```{r groups according quantiles}
+
+quantile(ukb_data_p$rnfl_r)
+
+library(dplyr)
+
+## creating groups
+ukb_data_p <- ukb_data_p %>%
+  mutate(rnfl_r_group = ifelse(rnfl_r <= 23.73660, "quantile 1",
+                         ifelse(rnfl_r > 23.73660 & rnfl_r <= 29.51148, "quantile 2",
+                         ifelse(rnfl_r > 29.51148 & rnfl_r <= 35.62819, "quantile 3", "quantile 4"))))
+
+### To do: cut function 
+
+```
+
+```{r rnfl histogram}
+
+figure1 <- ukb_data_p %>%
+  ggplot(aes(x=rnfl_r))+
+  geom_histogram()+
+  geom_vline(aes(xintercept=mean(rnfl_r)),color="red", linetype="dashed")+
+  geom_vline(aes(xintercept=median(rnfl_r)),color="blue",linetype="dotdash")+
+  theme_minimal()
+
+figure1
+
+```
+
+```{r mdrc histiogram}
+
+figure2 <- ukb_data_p %>%
+  ggplot(aes(x=mdrc))+
+  geom_histogram()+
+  geom_vline(aes(xintercept=mean(mdrc)),color="red", linetype="dashed")+
+  geom_vline(aes(xintercept=median(mdrc)),color="blue",linetype="dotdash")+
+  theme_minimal()
+
+figure2
+
+```
+```{r mdrc according to rnfl_r_group}
+
+figure3 <- ukb_data_p %>%
+  ggplot(aes(x=rnfl_r_group, y=age))+
+  geom_boxplot()+
+  geom_point()
+
+figure3
+
+```
+
+
+```{r univariate analysis}
+
+table1 <- ukb_data_p %>%
+  select(sex, age, rnfl_r, rnfl_r_group, mdrc, HT) %>%
+  tbl_summary(by=rnfl_r_group) %>%
+  add_overall() %>%
+  add_p()
+
+table1
+```
+
+
+```{r univariate analysis filtered by rnfl_r_y}
+
+# Table for 2006
+table2 <- ukb_data_p %>%
+  filter(rnfl_r_y == 2006) %>%
+  select(sex, age, rnfl_r, rnfl_r_group, mdrc, HT) %>%
+  tbl_summary(by = rnfl_r_group) %>%
+  add_overall() %>%
+  add_p()
+
+table2
+
+# Table for  2014
+table3 <- ukb_data_p %>%
+  filter(rnfl_r_y == 2014) %>%
+  select(sex, age, rnfl_r, rnfl_r_group, mdrc, HT) %>%
+  tbl_summary(by = rnfl_r_group) %>%
+  add_overall() %>%
+  add_p()
+
+table3
+
+### To do: combine talbe2 and table3 in a single table / add heading
+
+### REVIEW : variables included as baseline measurements in table1 of other UKB publications.
+
+### labels to variables (REVIEW: UKB varaible description (short)
+
+```
+
+
+
+
+
+```{r cognitive decline}
+
+## Determine whether or not a decline in a cognitive test, i.g, numeric memory, occured during the follow up.
+
+##Create a variable cog_dec coded as "cognitive decline", "no cognitive decline"
+
+
+ukb_data_p <- ukb_data_p %>%
+  mutate(cog_dec = case_when(
+    mdrc_y == 2014 & mdrc < lag(mdrc) ~ "cognitive decline",
+    TRUE ~ "no cognitive decline"
+  ))
+
+```
+
+```{r logistic regresion}
+
+##recoding data.
+
+## keep original text instead of using 0 and 1
+
+ukb_data_p <- ukb_data_p %>%
+  mutate(sex.factor = factor(sex) %>%
+           fct_recode("female" = "0",
+                      "male" = "1") %>%
+           ff_label("sex"),
+         
+         HT.factor = factor(HT) %>%
+           fct_recode("without hypertension" = "0",
+                      "with hypertension" = "1") %>%
+           ff_label("HT"),
+         
+         cog_dec.factor = factor(cog_dec) %>%
+           fct_recode("no cognitive decline" = "0",
+                      "cognitive decline" = "1") %>%
+           ff_label("cog_dec"),
+         
+         rnfl_r_group.factor = factor(rnfl_r_group) %>%
+           fct_recode("quantile 1" = "0",
+                      "quantile 2" = "1",
+                      "quantile 3" = "2",
+                      "quantile 4" = "3") %>%
+           ff_label("rnfl_r_group"),
+         
+         age = ff_label(age, "age")
+         )
+
+         
+### asumptions
+
+
+### logistic regression
+
+dependent <- "cog_dec.factor" 
+explanatory <- c("sex.factor", "age", "HT.factor", "rnfl_r_group.factor")
+fit2 = ukb_data_p %>%
+  finalfit(dependent, explanatory, metrics = TRUE)
+
+### check : linear regression
+### check: log regression using Alz diagnosis 
+### review dates needed with other variables
+```
+
