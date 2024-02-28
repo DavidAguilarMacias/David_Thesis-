@@ -1,0 +1,19 @@
+﻿ICD-10 code ,Disease
+E10,Insulin-dependent diabetes mellitus
+E11 ,Non-insulin-dependent diabetes mellitus
+G20 ,Parkinson's disease
+G30 ,Alzheimer's disease
+G35 ,Multiple sclerosis
+H35.3 ,Degeneration of macula and posterior pole
+H36.0 ,Diabetic retinopathy
+H40 ,Glaucoma
+I10 ,Essential (primary) hypertension
+I11 ,Hypertensive heart disease
+I12 ,Hypertensive renal disease
+I25 ,Chronic ischaemic heart disease
+I61 ,Intracerebral haemorrhage
+I63 ,Cerebral infarction
+I64 ,"Stroke, not specified as haemorrhage or infarction"
+,
+,
+,"Comment: I could not find  flied ID numbers for diseases (for instance, 28500 is the ""variable number"" for retinal thickness). The ICD-10 code itself seems to serve as the variable number. "
