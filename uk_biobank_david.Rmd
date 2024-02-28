@@ -1,0 +1,604 @@
+---
+title: "uk_biobank"
+author: "D Aguilar"
+date: "2024-01-25"
+output: html_document
+---
+
+```{r loading data}
+
+rm(list = ls())
+
+data <- read.table("../data/ukb677030.tab", header=TRUE, sep="\t")
+data$f.131022.0.0 <- as.Date(data$f.131022.0.0)
+data$f.131036.0.0 <- as.Date(data$f.131036.0.0)
+data$f.131042.0.0 <- as.Date(data$f.131042.0.0)
+data$f.131286.0.0 <- as.Date(data$f.131286.0.0)
+data$f.131290.0.0 <- as.Date(data$f.131290.0.0)
+data$f.131306.0.0 <- as.Date(data$f.131306.0.0)
+data$f.131362.0.0 <- as.Date(data$f.131362.0.0)
+data$f.131366.0.0 <- as.Date(data$f.131366.0.0)
+data$f.131368.0.0 <- as.Date(data$f.131368.0.0)
+data$f.131374.0.0 <- as.Date(data$f.131374.0.0)
+data$f.131380.0.0 <- as.Date(data$f.131380.0.0)
+
+```
+
+
+```{r renaming columns}
+
+### setting column names
+
+column_names <- c("Encoded anonymised participant ID", "Sex", "Age diabetes diagnosed",
+                  "Age diabetes diagnosed follow-up 1", "Age diabetes diagnosed follow-up 2",
+                  "Age diabetes diagnosed follow-up 3", "Test completion status",
+                  "Test completion status follow-up 1", "Test completion status follow-up 2",
+                  "Test completion status follow-up 3", "Age glaucoma diagnosed",
+                  "Age glaucoma diagnosed follow-up 1", "Age glaucoma diagnosed follow-up 2",
+                  "Age glaucoma diagnosed follow-up 3", "Intra-ocular pressure, corneal-compensated (right)",
+                  "Intra-ocular pressure, corneal-compensated (right) follow-up 1",
+                  "Intra-ocular pressure, Goldmann-correlated (right)",
+                  "Intra-ocular pressure, Goldmann-correlated (right) follow-up 1",
+                  "Intra-ocular pressure, corneal-compensated (left)",
+                  "Intra-ocular pressure, corneal-compensated (left) follow-up 1",
+                  "Intra-ocular pressure, Goldmann-correlated (left)",
+                  "Intra-ocular pressure, Goldmann-correlated (left) follow-up 1",
+                  "Age when diabetes-related eye disease diagnosed",
+                  "Age when diabetes-related eye disease diagnosed follow-up 1",
+                  "Age when diabetes-related eye disease diagnosed follow-up 2",
+                  "Age when diabetes-related eye disease diagnosed follow-up 3",
+                  "Which eye(s) affected by macular degeneration",
+                  "Which eye(s) affected by macular degeneration follow-up 1",
+                  "Which eye(s) affected by macular degeneration follow-up 2",
+                  "Which eye(s) affected by macular degeneration follow-up 3",
+                  "Age macular degeneration diagnosed",
+                  "Age macular degeneration diagnosed follow-up 1",
+                  "Age macular degeneration diagnosed follow-up 2",
+                  "Age macular degeneration diagnosed follow-up 3",
+                  "Which eye(s) affected by glaucoma",
+                  "Which eye(s) affected by glaucoma follow-up 1",
+                  "Which eye(s) affected by glaucoma follow-up 2",
+                  "Which eye(s) affected by glaucoma follow-up 3",
+                  "Prospective memory result",
+                  "Prospective memory result follow-up 1",
+                  "Prospective memory result follow-up 2",
+                  "Prospective memory result follow-up 3",
+                  "Mean time to correctly identify matches",
+                  "Mean time to correctly identify matches follow-up 1",
+                  "Mean time to correctly identify matches follow-up 2",
+                  "Mean time to correctly identify matches follow-up 3",
+                  "Reason for skipping OCT (right)",
+                  "Reason for skipping OCT (left)",
+                  "Number of correct matches in round",
+                  "Number of correct matches in round follow-up 1",
+                  "Number of correct matches in round follow-up 2",
+                  "Number of incorrect matches in round",
+                  "Number of incorrect matches in round follow-up 1",
+                  "Number of incorrect matches in round follow-up 2",
+                  "Time to complete round",
+                  "Time to complete round follow-up 1",
+                  "Time to complete round follow-up 2",
+                  "When pairs test completed",
+                  "When numeric memory test completed",
+                  "Maximum digits remembered correctly",
+                  "Pairs matching completion status",
+                  "Overall macular thickness (left)",
+                  "Overall macular thickness (left) follow-up 1",
+                  "Overall macular thickness (right)",
+                  "Overall macular thickness (right) follow-up 1",
+                  "Average retinal nerve fibre layer thickness (left)",
+                  "Average retinal nerve fibre layer thickness (left) follow-up 1",
+                  "rnfl_r",
+                  "rnfl_r_fu1",
+                  "Average inner nuclear layer thickness (left)",
+                  "Average inner nuclear layer thickness (left) follow-up 1",
+                  "Average inner nuclear layer thickness (right)",
+                  "Average inner nuclear layer thickness (right) follow-up 1",
+                  "Average ganglion cell-inner plexiform layer thickness (left)",
+                  "Average ganglion cell-inner plexiform layer thickness (left) follow-up 1",
+                  "Average ganglion cell-inner plexiform layer thickness (right)",
+                  "Average ganglion cell-inner plexiform layer thickness (right) follow-up 1",
+                  "Length of time suffering from hearing loss",
+                  "Extent affected by hearing loss",
+                  "Plasma Amyloid beta-40",
+                  "Plasma Amyloid beta-40 follow-up 1",
+                  "Plasma Amyloid beta-42",
+                  "Plasma Amyloid beta-42 follow-up 1",
+                  "Plasma Glial fibrillary acidic protein",
+                  "Plasma Glial fibrillary acidic protein follow-up 1",
+                  "Plasma NeuroFilament Light",
+                  "Plasma NeuroFilament Light follow-up 1",
+                  "Plasma pTau-181",
+                  "Plasma pTau-181 follow-up 1",
+                  "Date G20 first reported (Parkinson's disease)",
+                  "Date G30 first reported (Alzheimer's disease)",
+                  "Date G35 first reported (Multiple sclerosis)",
+                  "Date I10 first reported (Essential hypertension)",
+                  "Date I12 first reported (Hypertensive renal disease)",
+                  "Date I25 first reported (Chronic ischaemic heart disease)",
+                  "Date I61 first reported (Intracerebral haemorrhage)",
+                  "Date I63 first reported (Cerebral infarction)",
+                  "Date I64 first reported (Stroke, not specified as haemorrhage or infarction)",
+                  "Date I67 first reported (Other cerebrovascular diseases)",
+                  "Date I70 first reported (Atherosclerosis)")
+
+### assigning names to data set
+
+names(data) <- column_names
+
+### cleaning names
+
+library(janitor)
+data<- clean_names(data)
+
+```
+
+```{r}
+
+library(dplyr)
+library(Hmisc)
+
+data <- data %>%
+  mutate(
+    ht = !is.na(date_i10_first_reported_essential_hypertension),
+    dm = !is.na(age_diabetes_diagnosed),
+    alz = !is.na(date_g30_first_reported_alzheimers_disease),
+    glau = !is.na(age_glaucoma_diagnosed),
+    dr = !is.na(age_when_diabetes_related_eye_disease_diagnosed),
+    md = !is.na(age_macular_degeneration_diagnosed),
+    pd = !is.na(date_g20_first_reported_parkinsons_disease),
+    ms = !is.na(date_g35_first_reported_multiple_sclerosis),
+    hrd = !is.na(date_i12_first_reported_hypertensive_renal_disease),
+    ich = !is.na(date_i61_first_reported_intracerebral_haemorrhage),
+    cihd = !is.na(date_i25_first_reported_chronic_ischaemic_heart_disease),
+    ci = !is.na(date_i63_first_reported_cerebral_infarction),
+    sns = !is.na(date_i64_first_reported_stroke_not_specified_as_haemorrhage_or_infarction),
+    ocvd = !is.na(date_i67_first_reported_other_cerebrovascular_diseases)
+  )
+
+label(data$female) <- "Female, n(%)"
+label(data$rnfl_r) <- "Retinal Nerve Fiber Layer thickness, median (IQR)"
+label(data$ht) <- "Hypertension"
+label(data$dm) <- "Diabetes"
+label(data$alz) <- "Alzheimer´s Disease"
+label(data$glau) <- "Glaucoma"
+label(data$dr) <- "Diabetic retinopathy"
+label(data$md) <- "Multiple sclerosis"
+label(data$pd) <- "Parkison´s Disease"
+label(data$ms) <- "Multiple sclerosis"
+label(data$hrd) <- "Hypertensive renal disease"
+label(data$ich) <- "Intracerebral haemorrhage"
+label(data$cihd) <- "Chronic ischaemic heart diseasen"
+label(data$ci) <- "Cerebral infarction"
+label(data$sns) <- "Stroke not specified"
+label(data$ocvd) <- "Other cerebrovascular diseases"
+label(data$intra_ocular_pressure_corneal_compensated_right) <- "Intra-ocular pressure (mmHg)"
+
+```
+
+
+```{r Converting categorical variables to factors with correct levels}
+
+data <- data %>%
+  mutate(
+    sex.factor = factor(
+      ifelse(sex == 0, "Female","Male"),
+      levels = c("Female", "Male")
+      ),
+    ht.factor = factor(
+      ifelse(!is.na(date_i10_first_reported_essential_hypertension), "hypertension", "no hypertension"),
+      levels = c("no hypertension", "hypertension")
+      ),
+    alz.factor = factor(
+      ifelse(!is.na(date_g30_first_reported_alzheimers_disease), "alzheimer", "no alzheimer"),
+      levels = c("no alzheimer", "alzheimer")
+      ),
+    dm.factor = factor(
+      ifelse(!is.na(age_diabetes_diagnosed), "diabetes", "no diabetes"), 
+      levels = c("no diabetes", "diabetes")
+      ),
+    glau.factor = factor(
+      ifelse(!is.na(age_glaucoma_diagnosed), "glaucoma", "no glaucoma"),
+      levels = c("no glaucoma", "glaucoma")
+      ),
+    dr.factor = factor(
+      ifelse(!is.na(age_when_diabetes_related_eye_disease_diagnosed), "diabetic retinopathy", "no diabetic retinopathy"),
+      levels = c("no diabetic retinopathy", "diabetic retinopathy")
+      ),
+    md.factor = factor(
+      ifelse(!is.na(age_macular_degeneration_diagnosed), "macular degeneration", "no macular degeneration"),
+      levels = c("no macular degeneration", "macular degeneration")
+      ),
+    pd.factor = factor(
+      ifelse(!is.na(date_g20_first_reported_parkinsons_disease), "parkinson disease", "no parkinson disease"),
+      levels = c("no parkinson disease", "parkinson disease")
+      ),
+    ms.factor = factor(
+      ifelse(!is.na(date_g35_first_reported_multiple_sclerosis), "multiple sclerosis", "no multiple sclerosis"),
+      levels = c("no multiple sclerosis", "multiple sclerosis")
+      ),
+    hrd.factor = factor(
+      ifelse(!is.na(date_i12_first_reported_hypertensive_renal_disease), "hypertensive renal disease", "no hypertensive renal disease"),
+      levels = c("no hypertensive renal disease", "hypertensive renal disease")
+      ),
+    cihd.factor = factor(
+      ifelse(!is.na(date_i25_first_reported_chronic_ischaemic_heart_disease), "chronic ischaemic heart disease", "no chronic ischaemic heart disease"),
+      levels = c("no chronic ischaemic heart disease", "chronic ischaemic heart disease")
+      ),
+    ich.factor = factor(
+      ifelse(!is.na(date_i61_first_reported_intracerebral_haemorrhage), "intracerebral haemorrhage", "no intracerebral haemorrhage"),
+      levels = c("no intracerebral haemorrhage", "intracerebral haemorrhage")
+      ),
+    ci.factor = factor(
+      ifelse(!is.na(date_i63_first_reported_cerebral_infarction), "cerebral infarction", "no cerebral infarction"),
+      levels = c("no cerebral infarction", "cerebral infarction")
+      ),
+    sns.factor = factor(
+      ifelse(!is.na(date_i64_first_reported_stroke_not_specified_as_haemorrhage_or_infarction), "stroke", "no stroke"),
+      levels = c("no stroke", "stroke")
+      ),
+    ocvd.factor = factor(
+      ifelse(!is.na(date_i67_first_reported_other_cerebrovascular_diseases), "other cerebrovascular disease", "no other cerebrovascular disease"),
+      levels = c("no other cerebrovascular disease", "other cerebrovascular disease")
+      ),
+    )
+
+```
+
+```{r Generating quantiles}
+
+library(Hmisc)
+
+### generating groups accoridng to RNFL thickness qunatiles.
+
+data <- data %>%
+  filter(!is.na(rnfl_r)) %>%
+  mutate(rnflr_q = ntile(rnfl_r, 4))
+
+data$rnflr_q_factor <- factor(
+  data$rnflr_q, 
+  levels = c(1, 2, 3, 4),
+  labels = c("Quantile 1", "Quantile 2", "Quantile 3", "Quantile 4"))
+
+#Relevel factor for regression models
+#data$rnflr_q_factor <- relevel(data$rnflr_q_factor, ref = "quantile 4")
+
+```
+
+
+```{r Generating table1}
+
+library(gtsummary)
+library(gt)
+library(webshot2)
+
+### Table without excluding participants with missing values in cognitive tests at baseline
+
+table1 <- data %>%
+  select(sex, rnfl_r, intra_ocular_pressure_corneal_compensated_right, glau, ht, dr, md, pd, ms, hrd, cihd, ich, ci, sns, ocvd, pmr, mean_time_to_correctly_identify_matches, number_of_incorrect_matches_in_round, maximum_digits_remembered_correctly, plasma_amyloid_beta_40, plasma_amyloid_beta_42, plasma_p_tau_181, ht, alz, rnflr_q_factor) %>%
+  tbl_summary(by = rnflr_q_factor, missing = "no") %>%
+  add_overall() %>%
+  add_p() %>%
+  modify_header(label = "**Baseline characteristics of all participants with baseline optical coherence tomography measurements**")
+
+table1
+
+save(table1, file = "table.Rdata")
+
+### Filtering data set by comorbidities.
+### Note 01/02/2024: include these variables in table1 instead of excluding them. 
+### Consider them, for instance, for multivariable modeling. 
+### Exclude: patients without OCT measurements or do not have results in cognitive tests.
+
+#data_comorb <- data %>%
+  #filter(
+    #glau != "glaucoma",
+    #dr != "diabetic retinopathy",
+    #md != "macular degeneration",
+    #pd != "parkinson disease",
+    #ms != "multiple sclerosis",
+    #hrd != "hypertensive renal disease",
+    #cihd != "chronic ischaemic heart disease",
+    #ich != "intracerebral haemorrhage",
+    #ci != "cerebral infarction",
+    #sns != "stroke",
+    #ocvd != "other cerebrovascular disease"
+  #)
+
+
+### Excluding participants with missing values in cognitive tests at baseline
+
+data_filtered_baseline <- data %>%
+  filter(
+    across(
+      c(prospective_memory_result, mean_time_to_correctly_identify_matches, number_of_correct_matches_in_round,number_of_incorrect_matches_in_round, maximum_digits_remembered_correctly),
+      ~ !is.na(.)
+    )
+  )
+
+### Excluding patients with missing values in cognitive tests at baseline and follow up 1
+
+data_fiiltered_fu_test <- data %>%
+  filter(
+    across(
+      c(prospective_memory_result, prospective_memory_result_follow_up_1, mean_time_to_correctly_identify_matches, number_of_correct_matches_in_round, number_of_correct_matches_in_round_follow_up_1, number_of_incorrect_matches_in_round, number_of_incorrect_matches_in_round_follow_up_1, maximum_digits_remembered_correctly), 
+      ~!is.na(.)
+    )
+  )
+
+### Generating table1 (table1_f) without participants with missing values in cognitive tests at baseline.
+
+table1_f <- data_filtered_baseline %>%
+  select(sex, rnfl_r, intra_ocular_pressure_corneal_compensated_right, glau, dr, md, pd, ms, hrd, cihd, ich, ci, sns, ocvd, prospective_memory_result, mean_time_to_correctly_identify_matches, number_of_incorrect_matches_in_round, maximum_digits_remembered_correctly, plasma_amyloid_beta_40, plasma_amyloid_beta_42, plasma_p_tau_181, alz, rnflr_q_factor) %>%
+  tbl_summary(by = rnflr_q_factor, missing = "no") %>%
+  add_overall() %>%
+  add_p() %>%
+  modify_spanning_header(
+    label = "**Baseline characteristics of all participants with baseline optical coherence tomography measurements**"
+  )
+
+table1_f
+
+### merging tables (to observe the change after filtering for missing values in cognitive tests at baseline)
+
+table1_merged <- tbl_merge(
+  list(table1, table1_f),
+  tab_spanner = c("**All Participants**", "**Filtered Participants**")
+)
+
+table1_merged
+
+```
+
+```{r Obtaining the difference in the cognitive tests between baseline and follow up 1}
+
+library(dplyr)
+
+### Note 01/02/2024 : Run this code with the differences in cognitive tests at baseline and follow up 1.
+
+
+### Difference in the mean time to correctly identify matches between baseline and follow-up 1
+
+data_time_matches <- data %>%
+  filter(!is.na(mean_time_to_correctly_identify_matches))%>%
+  filter(!is.na(mean_time_to_correctly_identify_matches_follow_up_1)) %>% 
+  select(mean_time_to_correctly_identify_matches, mean_time_to_correctly_identify_matches_follow_up_1) %>%
+  mutate(change_time_matches = mean_time_to_correctly_identify_matches - mean_time_to_correctly_identify_matches_follow_up_1)
+
+### Difference in the number of incorrect matches between baseline and follow-up 1
+
+data_incorrect_matches <- data %>%
+  filter(!is.na(number_of_incorrect_matches_in_round))%>%
+  filter(!is.na(number_of_correct_matches_in_round_follow_up_1)) %>% 
+  filter(!is.na(rnflr_g)) %>%
+  select(number_of_incorrect_matches_in_round, number_of_incorrect_matches_in_round_follow_up_1, rnflr_g) %>%
+  mutate(change_incorrect_matches = number_of_incorrect_matches_in_round - number_of_incorrect_matches_in_round_follow_up_1)
+
+```
+
+
+```{r distribution of variables}
+
+### histogram: mean time to correctly identify matches 
+
+time_matches_figure <-ggplot(data= data_time_matches, aes(x=mean_time_to_correctly_identify_matches))+
+  geom_histogram()+
+  geom_vline(aes(xintercept=mean(mean_time_to_correctly_identify_matches)),color="red", linetype="dashed")+
+  geom_vline(aes(xintercept=median(mean_time_to_correctly_identify_matches)),color="blue",linetype="dotdash")+
+  theme_minimal()
+
+time_matches_figure ## not normally distributed
+
+### histogram: number of incorrect matches in round  
+
+incorrect_matches_figure <-ggplot(data= data_incorrect_matches, aes(x=number_of_incorrect_matches_in_round))+
+  geom_histogram()+
+  geom_vline(aes(xintercept=mean(number_of_incorrect_matches_in_round)),color="red", linetype="dashed")+
+  geom_vline(aes(xintercept=median(number_of_incorrect_matches_in_round)),color="blue",linetype="dotdash")+
+  theme_minimal()
+
+incorrect_matches_figure  ## not normally distributed
+
+### histogram: retinal nerve fiber layer thickness of the right eye
+
+rnfl_r_figure <-ggplot(data= data_filtered_baseline, aes(x=rnfl_r))+
+  geom_histogram()+
+  geom_vline(aes(xintercept=mean(rnfl_r)),color="red", linetype="dashed")+
+  geom_vline(aes(xintercept=median(rnfl_r)),color="blue",linetype="dotdash")+
+  theme_minimal()
+
+rnfl_r_figure ## analyse the warning message
+
+```
+
+
+```{r correlation}
+
+### retinal nerve fiber layer thickness of the right eye and mean time to correctly identify matches.
+
+data_correlation <- data_filtered_baseline %>%
+  filter(!is.na(number_of_correct_matches_in_round)) %>%
+    filter(!is.na(mean_time_to_correctly_identify_matches))
+
+cor_rnflr_time_matches <- cor(data_correlation$number_of_incorrect_matches_in_round, 
+                          data_correlation$mean_time_to_correctly_identify_matches,
+                          method = "pearson")
+
+cor_rnflr_time_matches
+
+ggplot(data=data_correlation,aes(x=number_of_correct_matches_in_round,y=rnfl_r))+
+  geom_point()
+
+### retinal nerve fiber layer thickness of the right eye and number of incorrect matches in round.
+
+cor_rnflr_time_matches <- cor(data_filtered_baseline$rnfl_r, 
+                          data_filtered_baseline$number_of_incorrect_matches_in_round,
+                          method = "spearman")
+
+cor_rnflr_time_matches
+
+```
+
+
+
+```{r figures}
+#### box plot
+
+library(tidyverse)
+library(hrbrthemes)
+library(viridis)
+
+figure1 <- data_incorrect_matches %>%
+  ggplot( aes(x=rnflr_g, y=change_incorrect_matches)) +
+    geom_boxplot() +
+    scale_fill_viridis(discrete = TRUE, alpha=0.6, option="A") +
+    theme_bw() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Change in number of incorrect pairs matched between baseline and follow-up 1 by RNFL quantile") +
+    xlab("")
+
+figure1
+
+### Figure 2. Bar plot with the number of incorrect matches at baseline by RNFL quantile 
+
+figure2 <- data_incorrect_matches %>%
+  ggplot(aes(x=rnflr_g, y=number_of_incorrect_matches_in_round)) + 
+  geom_bar(stat = "identity")
+
+figure2
+```
+
+
+```{r linear regression}
+
+### linear regression model.
+
+### dependent: 
+  # maximum digits remember correctly
+  # mean time to correctly identify matches
+  # number of incorrect matches in round
+  
+
+### independent: 
+  # sex (reference group = female), 
+  # retinal nerve fiber layer thickness of the right eye quartile (rnflr_q_factor, reference group   = quantile 4 (thickest),
+  # hypertension (reference group = no hypertension)
+
+library(broom)
+
+### mean time to correctly identify matches
+
+data_filtered_baseline$rnflr_q_factor <- relevel(data$rnflr_q_factor, 
+                               ref = "Quantile 4")
+
+lm_time_matches <- data_filtered_baseline %>%
+  lm(mean_time_to_correctly_identify_matches ~ sex.factor + ht.factor + rnflr_q_factor, data = .) %>%
+  tidy() %>%
+  mutate(
+    estimate = sprintf("%.4f", estimate),
+    std.error = sprintf("%.4f", std.error),
+    statistic = sprintf("%.4f", statistic),
+    p.value = sprintf("%.4f", p.value)
+  )
+
+lm_time_matches$dependent_variable <- "mean_time_to_correctly_identify_matches"
+
+### number of incorrect matches in round
+
+lm_incorrect_matches <- data_filtered_baseline %>%
+  lm(number_of_incorrect_matches_in_round ~ sex.factor + ht.factor + rnflr_q_factor, data = .) %>%
+  tidy() %>%
+  mutate(
+    estimate = sprintf("%.4f", estimate),
+    std.error = sprintf("%.4f", std.error),
+    statistic = sprintf("%.4f", statistic),
+    p.value = sprintf("%.4f", p.value)
+  )
+
+lm_incorrect_matches$dependent_variable <- "number_of_incorrect_matches_in_round"
+
+### maximum digits remembered correctly
+
+lm_max_digits <- data_filtered_baseline %>%
+  lm(maximum_digits_remembered_correctly ~ sex.factor + ht.factor + rnflr_q_factor, data = .) %>%
+  tidy() %>%
+  mutate(
+    estimate = sprintf("%.4f", estimate),
+    std.error = sprintf("%.4f", std.error),
+    statistic = sprintf("%.4f", statistic),
+    p.value = sprintf("%.4f", p.value)
+  )
+
+lm_max_digits$dependent_variable <- "maximum_digits_remembered_correctly"
+
+
+### creating titles for each division between models for better visual identification
+
+label_time_matches <- tibble::tibble(term = "RNFL thickness and mean time to correctly identify matches",
+                                      estimate = NA,
+                                      std.error = NA,
+                                      statistic = NA,
+                                      p.value = NA,
+                                      dependent_variable = NA)
+
+label_incorrect_matches <- tibble::tibble(term = "RNFL thickness and number of incorrect matches",
+                                          estimate = NA,
+                                          std.error = NA,
+                                          statistic = NA,
+                                          p.value = NA,
+                                          dependent_variable = NA)
+
+label_max_digits <- tibble::tibble(term = "RNFL thickness and maximum digits remembered correctly",
+                                   estimate = NA,
+                                   std.error = NA,
+                                   statistic = NA,
+                                   p.value = NA,
+                                   dependent_variable = NA)
+
+
+# Combining the label rows and tidied models summaries into a single data frame
+
+tidy_models <- bind_rows(label_time_matches, lm_time_matches, label_incorrect_matches, lm_incorrect_matches, label_max_digits, lm_max_digits)
+
+tidy_models 
+```
+
+```{r logistic regression}
+
+library(finalfit)
+library(tidyverse)
+library(janitor)
+library(broom)
+library(ggplot2)
+library(GGally)
+library(car)
+
+data_filtered_baseline <- data_filtered_baseline %>%
+  mutate(
+    pmr.factor = factor(ifelse(
+        prospective_memory_result == 1, "correct at first attempt", 
+        "instruction not recalled or more than one attempt required"),
+                 levels = c("correct at first attempt", 
+                            "instruction not recalled or more than one attempt required"))
+  )
+
+dependent <- "pmr"
+explanatory <- c("sex.factor", "ht.factor", "rnflr_q_factor")
+
+glm_1 <- data_filtered_baseline %>%
+  finalfit(dependent, explanatory, metrics=TRUE)
+
+tidy_glm1 <- tidy(glm(as.formula(paste(dependent, "~", paste(explanatory, collapse = " + "))), 
+                         data = data_filtered_baseline, 
+                         family = "binomial")) %>%
+  mutate(across(c(estimate, std.error, statistic, p.value), ~sprintf("%.4f", .)))
+
+data_filtered_baseline%>%
+  or_plot(dependent, explanatory,
+          breaks=c(0.5,1,2,5,10))
+
+```
+
