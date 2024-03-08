@@ -1,0 +1,247 @@
+---
+title: "CogGroups"
+author: "D Aguilar"
+date: "2024-03-06"
+output: html_document
+---
+
+```{r Loading data and pre-procesing it}
+
+load("../data/ukb_data.RData")
+
+### creating groups based on cognitive tests results
+
+library(dplyr)
+
+data_test <- data %>%
+  mutate(
+    prosm_result = recode_factor( # prospective memory 
+      prospective_memory_result,
+      "1" = "passed", 
+      "0" = "failed",
+      "2" = "failed"
+      ),
+    pairm_result = factor(        # pairs matching
+      ifelse(
+      number_of_incorrect_matches_in_round <= 2, "passed", "failed"),
+      levels = c("passed", "failed")
+      ),
+    react_result = factor(        # reaction time
+      ifelse(
+      mean_time_to_correctly_identify_matches <= 770, "passed", "failed"),
+      levels = c("passed", "failed")
+      )
+    ) %>%
+  select(rnfl_r, rnflr_q_factor, rnflr_q_factor4, prosm_result, 
+         pairm_result, react_result)
+
+### Cognitive deficit group
+
+# Converting "passed" to 0 and "failed" to 1
+data_test <-  data_test %>%
+  mutate(                     
+    prosm_numeric = ifelse(                 # prospective memory
+      prosm_result == "failed", 1, 0),
+    pairm_numeric = ifelse(                 # pairs matching
+      pairm_result == "failed", 1, 0),
+    react_numeric = ifelse(                 # reacting time 
+      react_result == "failed", 1, 0)
+    ) %>%
+  mutate(
+    cog_def = rowSums(                      # adding results row-wise
+      select(., prosm_numeric, pairm_numeric, react_numeric)
+      ),
+    cog_def = factor(
+      ifelse(                               # cognitive deficit as factor
+        cog_def >= 2, "Yes", "No"),
+      levels = c("No", "Yes")
+      )
+    )
+
+```
+
+```{r figures}
+library(ggplot2)
+
+# Prospective memory result and RNFL thickness quartiles
+f1 <- data_test %>%
+  filter(!is.na(prosm_result)) %>%
+  ggplot(aes(x = rnflr_q_factor,
+             fill = prosm_result)) +
+  geom_bar(position = "fill") + 
+  scale_y_continuous(labels = scales::percent_format()) +
+  theme(legend.position = "none") +
+  labs (x = " ",
+        y = " ",
+        title = "Prospective memory",
+        fill = " ")
+
+# Pairs matching result and RNFL thickness quartiles
+f2 <- data_test %>%
+  filter(!is.na(pairm_result)) %>%
+  ggplot(aes(x = rnflr_q_factor,
+             fill = pairm_result)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  theme(legend.position = "none") +
+  labs (x = "Retinal nerve fiber layer thickness",
+        y = " ",
+        title = "Pairs matching",
+        fill = " ")
+
+# Reacting time result and RNFL thickness quartiles
+f3 <- data_test %>%
+  filter(!is.na(react_result)) %>%
+  ggplot(aes(x = rnflr_q_factor,
+             fill = react_result)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs (x = " ",
+        y = " ",
+        title = "Reaction time",
+        fill = " ")
+
+# cognitive deficit and RNFL thickness
+# NOTE: look up how to plot only the cognitive deficit cases (without the no cognitive deficit ones) and without altering the percentages.
+
+#f4 <- data_cog %>%
+#  filter(!is.na(cog_def)) %>%
+#  ggplot(aes(x = rnflr_q_factor, fill = cog_def)) +
+#  geom_col(position = "dodge") +
+#  facet_grid(~rnflr_q_factor) +
+#  labs (x = " ",
+#        y = " ",
+#        title = "Cognitive deficit",
+#        fill = " ") +
+#  theme_minimal()
+#f4
+
+  
+
+library(patchwork)
+
+f <- f1 + f2 + f3
+f
+
+ggsave(filename = "f.png", plot = f, width = 8, height = 6, dpi = 300)
+```
+
+``` {r }
+library(gt)
+library(gtsummary)
+library(ggpubr)
+
+data_f <- data_test %>%
+  filter(complete.cases(rnfl_r, prosm_result, 
+                        pairm_result, react_result, cog_def))
+
+
+t <- data_f %>%
+  select(rnfl_r, rnflr_q_factor4, prosm_result, 
+         pairm_result, react_result, cog_def) %>%
+  tbl_summary(by = rnflr_q_factor4,
+              missing = "no",
+              label = list(
+              rnfl_r ~ "Retinal nerve fiber layer thickness, um",
+              prosm_result ~ "Prospective memory result",
+              pairm_result ~ "Pairs matching result",
+              react_result ~ "Reaction time result",
+              cog_def ~ "Cognitive deficit"
+              )) %>%
+  remove_row_type(
+    variables = c(prosm_result, 
+                  pairm_result, react_result,
+                  cog_def), 
+    type = "level",
+    level_value = c("passed", "no cognitive deficit")) %>%
+  modify_header(label = "**Variable**") %>%
+  modify_spanning_header(c("stat_1", "stat_2", "stat_3", "stat_4") ~ "**Retinal Nerve Fiber Layer Quartile**") %>%
+  add_p()
+
+t  
+
+t <- as_gt(t)
+gtsave(t, filename = "t.html")
+```
+
+
+
+```{r Assumptions logistic regression}
+
+library(finalfit)
+library(tidyr)
+
+
+# linearity of continous variable (rnfl_r) to the response (cog_def)
+
+linearity <- data_test %>%
+  mutate(
+    cog_def.num = as.numeric(cog_def) - 1
+  ) %>%
+  select(cog_def.num, rnfl_r) %>%
+  pivot_longer(all_of(c("rnfl_r")), names_to = "predictors") %>%
+  ggplot(aes(x= value, y = cog_def.num)) + 
+  geom_point(size = 0.5, alpha = 0.5) +
+  geom_smooth(method = "loess")
+
+# multicollinearity
+
+library(GGally)
+
+explanatory <- c("rnfl_r", "rnflr_q_factor4", 
+                 "prosm_result", "pairm_result", 
+                 "react_result")
+multicollinearity <- data_f %>%
+  #remove_labels() %>% in case any labels are used
+  ggpairs(columns=explanatory)
+
+
+```
+
+
+
+```{r basic glm}
+
+fit1 <- glm(cog_def ~ rnflr_q_factor4, data = data_f, family = binomial)
+summary(fit1)
+
+library(broom)
+
+tify_fit1 <- fit1 %>%
+  tidy(conf.int = TRUE, exp = TRUE)
+
+save(tify_fit1, file = "tify_fit1.RData")
+
+# using finalfit
+
+library(finalfit)
+
+dependent <- "cog_def"
+explanatory <-  "rnflr_q_factor4"
+
+finalfit_fit1 <- data_f %>%
+  finalfit(dependent, explanatory, metrics = TRUE)
+
+library(gt)
+glm <- finalfit_fit1 %>%
+  as_gt()
+
+
+
+### OR plot
+
+or_plot <- data_f %>%
+  or_plot(dependent, explanatory,
+          breaks=c(0.5,1,2,5,10), 
+          dependent_label = "Cognitive deficit")
+
+ggsave("or_plot.png", or_plot, width = 8, height = 6, units = "in")
+```
+
+```{r saving object into an RData file}
+
+# Save multiple objects as an RData file
+save(f, t, tify_fit1, or_plot, file = "March7.RData")
+
+```
+
